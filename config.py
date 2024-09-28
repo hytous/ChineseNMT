@@ -12,7 +12,8 @@ bos_idx = 2
 eos_idx = 3
 src_vocab_size = 32000
 tgt_vocab_size = 32000
-batch_size = 32
+# batch_size = 32  # 有点大
+batch_size = 16
 epoch_num = 40
 early_stop = 5
 lr = 3e-4
@@ -38,10 +39,19 @@ output_path = './experiment/output.txt'
 # thus, if you wanna use os.environ['CUDA_VISIBLE_DEVICES'] = '2, 3'
 # you should set CUDA_VISIBLE_DEVICES = 2 as main -> gpu_id = '0', device_id = [0, 1]
 gpu_id = '0'
-device_id = [0, 1]
+# device_id = [0, 1]  # 多gpu时
+device_id = 0  # 只有一个gpu
 
 # set device
 if gpu_id != '':
     device = torch.device(f"cuda:{gpu_id}")
+    # # 检查是否有可用的 GPU
+    # try:
+    #     # 尝试创建一个张量并将其移动到 cuda:0
+    #     test_tensor = torch.tensor([1.0, 2.0, 3.0]).to(device)
+    #     print(f"Device {device} is available and working.")
+    #     print(f"Tensor on cuda:0: {test_tensor}")
+    # except Exception as e:
+    #     print(f"Error when using {device}: {e}")
 else:
     device = torch.device('cpu')

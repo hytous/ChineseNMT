@@ -26,6 +26,7 @@ def run_epoch(data, model, loss_compute):
 
 
 def train(train_data, dev_data, model, model_par, criterion, optimizer):
+    torch.cuda.empty_cache()  # 清理未使用的显存
     """训练并保存模型"""
     # 初始化模型在dev集上的最优Loss为一个较大值
     best_bleu_score = 0.0
@@ -33,13 +34,19 @@ def train(train_data, dev_data, model, model_par, criterion, optimizer):
     for epoch in range(1, config.epoch_num + 1):
         # 模型训练
         model.train()
+        # 多gpu
+        # train_loss = run_epoch(train_data, model_par,
+        #                        MultiGPULossCompute(model.generator, criterion, config.device_id, optimizer))
         train_loss = run_epoch(train_data, model_par,
-                               MultiGPULossCompute(model.generator, criterion, config.device_id, optimizer))
+                               LossCompute(model.generator, criterion, optimizer))
         logging.info("Epoch: {}, loss: {}".format(epoch, train_loss))
         # 模型验证
         model.eval()
+        # 多gpu
+        # dev_loss = run_epoch(dev_data, model_par,
+        #                      MultiGPULossCompute(model.generator, criterion, config.device_id, None))
         dev_loss = run_epoch(dev_data, model_par,
-                             MultiGPULossCompute(model.generator, criterion, config.device_id, None))
+                             LossCompute(model.generator, criterion, None))
         bleu_score = evaluate(dev_data, model)
         logging.info('Epoch: {}, Dev loss: {}, Bleu Score: {}'.format(epoch, dev_loss, bleu_score))
 
@@ -177,9 +184,12 @@ def test(data, model, criterion):
         model.load_state_dict(torch.load(config.model_path))
         model_par = torch.nn.DataParallel(model)
         model.eval()
-        # 开始预测
+        # 开始预测'
+        # 多gpu
+        # test_loss = run_epoch(data, model_par,
+        #                       MultiGPULossCompute(model.generator, criterion, config.device_id, None))
         test_loss = run_epoch(data, model_par,
-                              MultiGPULossCompute(model.generator, criterion, config.device_id, None))
+                              LossCompute(model.generator, criterion, None))
         bleu_score = evaluate(data, model, 'test')
         logging.info('Test loss: {},  Bleu Score: {}'.format(test_loss, bleu_score))
 
